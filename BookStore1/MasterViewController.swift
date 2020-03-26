@@ -12,7 +12,7 @@ class MasterViewController: UITableViewController {
 
     var detailViewController: DetailViewController? = nil
     var objects = [Any]()
-
+    var myBookStore = BookStore()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -34,9 +34,12 @@ class MasterViewController: UITableViewController {
 
     @objc
     func insertNewObject(_ sender: Any) {
-        objects.insert(NSDate(), at: 0)
-        let indexPath = IndexPath(row: 0, section: 0)
-        tableView.insertRows(at: [indexPath], with: .automatic)
+        
+        performSegue(withIdentifier: "addBookSegue", sender: nil)
+        //to było wczesniej
+//        objects.insert(NSDate(), at: 0)
+//        let indexPath = IndexPath(row: 0, section: 0)
+//        tableView.insertRows(at: [indexPath], with: .automatic)
     }
 
     // MARK: - Segues
@@ -44,13 +47,19 @@ class MasterViewController: UITableViewController {
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "showDetail" {
             if let indexPath = tableView.indexPathForSelectedRow {
-                let object = objects[indexPath.row] as! NSDate
+                let selectedBook: Book = myBookStore.bookList[indexPath.row]
                 let controller = (segue.destination as! UINavigationController).topViewController as! DetailViewController
-                controller.detailItem = object
+                controller.detailItem = selectedBook
+                //controller.delegate = self
+                
                 controller.navigationItem.leftBarButtonItem = splitViewController?.displayModeButtonItem
                 controller.navigationItem.leftItemsSupplementBackButton = true
-                detailViewController = controller
+              
+                
             }
+        }else if segue.identifier == "addBookSegue" {
+            let vc = segue.destination as! AddBookViewController
+            vc.delegate = self as! BookStoreDelegate  //???????????
         }
     }
 
@@ -61,13 +70,13 @@ class MasterViewController: UITableViewController {
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return objects.count
+        return myBookStore.bookList.count
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-        let object = objects[indexPath.row] as! NSDate
-        cell.textLabel!.text = object.description
+        cell.textLabel!.text = myBookStore.bookList[indexPath.row].title
+        cell.accessoryType = .disclosureIndicator
         return cell
     }
 
@@ -84,7 +93,25 @@ class MasterViewController: UITableViewController {
             // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view.
         }
     }
-
-
+    func newBook(_ controller: AnyObject, newBook: Book) {
+        myBookStore.bookList.append(newBook)
+        tableView.reloadData()
+        navigationController?.popToRootViewController(animated: true)
+    }
+    func deleteBook(_ controller: AnyObject) {
+        if let row = tableView.indexPathForSelectedRow?.row {
+            myBookStore.bookList.remove(at:row)
+        }
+        tableView.reloadData()
+      navigationController?.popToRootViewController(animated: true)
+    }
+    
+    func editBook(_ controller: AnyObject, editBook: Book) {
+        if let row = tableView.indexPathForSelectedRow?.row {
+            myBookStore.bookList[row] = editBook
+        }
+        tableView.reloadData()
+        navigationController?.popToRootViewController(animated: true)
+    }
 }
 
